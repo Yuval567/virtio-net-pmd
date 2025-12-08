@@ -98,4 +98,4 @@ This is a longer path that goes through a “contractor” – the chipset.
 
 
 
-![flow](./flow.png.png)
+![flow](./flow.png)
