@@ -1,0 +1,56 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.d  # C/C++ dependency files
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug information files (if not needed for debugging elsewhere)
+*.dbg
+*.pdb
+
+# Build directories
+build/
+bin/
+obj/
+dist/
+
+# IDE specific files (optional, add as needed)
+# For Visual Studio:
+.cachefile
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+ipch/
+# For VS Code:
+.vscode/
+# For Eclipse:
+.cproject
+.project
+.settings
+# For Emacs/Vim temporary files:
+*~
+.*.swp
+.*.swo
