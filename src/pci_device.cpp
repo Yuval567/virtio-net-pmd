@@ -1,10 +1,13 @@
 #include "pci_device.h"
+#include "utils.h"
 
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/vfio.h>
+
+#include "spdlog/spdlog.h"
 
 PCIDevice::PCIDevice(const int device_fd)
 {
@@ -24,11 +27,10 @@ void PCIDevice::read_config_header(const int device_fd)
 
     if (ioctl(device_fd, VFIO_DEVICE_GET_REGION_INFO, &reg) < 0)
     {
-        throw std::runtime_error("Failed to get config region info");
+        LOG_AND_THROW("Failed to get config region info");
     }
 
-    std::cout << "Config Space found at offset: 0x" << std::hex << reg.offset
-        << " (Size: 0x" << reg.size << ")" << std::endl;
+    spdlog::info("Config Space found at offset: 0x{0:x} (Size: 0x{1:x})", reg.offset, reg.size);
 
 
 
@@ -37,9 +39,9 @@ void PCIDevice::read_config_header(const int device_fd)
 
     if (ret != sizeof(config_header_))
     {
-        throw std::runtime_error("Failed to read full PCI header");
+        LOG_AND_THROW("Failed to read full PCI header");
     }
 
-    std::cout << "PCI Config Header read successfully!" << std::endl;
+    spdlog::info("PCI Config Header read successfully!");
 }
 
