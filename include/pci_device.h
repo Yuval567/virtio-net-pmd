@@ -1,7 +1,11 @@
 #pragma once
 
-#include "data_structures/pci_config_header.h"
+#include <vector>
+#include <linux/vfio.h>
 
+#include "data_structures/pci_config_header.h"
+#include "data_structures/mapped_bar.h"
+#include "data_structures/capability_node.h"
 
 class PCIDevice
 {
@@ -9,11 +13,15 @@ public:
     PCIDevice(const int device_fd);
     ~PCIDevice();
 
-    const pci_config_header& get_config_header() const noexcept { return config_header_; }
+    const pci_config_header_type0& get_config_header() const noexcept { return config_header_; }
 
 private:
     void read_config_header(const int device_fd);
     void map_bar_regions(const int device_fd);
+    void read_capabilities(const int device_fd);
 
-    pci_config_header config_header_;
+    vfio_region_info config_region_;
+    pci_config_header_type0 config_header_;
+    std::vector<MappedBar> mapped_bars_;
+    std::vector<capability_node> capabilities_;
 };
