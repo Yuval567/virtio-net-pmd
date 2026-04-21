@@ -31,8 +31,8 @@ PCIDevice::~PCIDevice()
 
 void PCIDevice::read_config_header(const int device_fd)
 {
-    config_region_ = { .argsz = sizeof(config_region_), .index = VFIO_PCI_CONFIG_REGION_INDEX};
-    
+    config_region_ = { .argsz = sizeof(config_region_), .index = VFIO_PCI_CONFIG_REGION_INDEX };
+
     if (ioctl(device_fd, VFIO_DEVICE_GET_REGION_INFO, &config_region_) < 0)
     {
         LOG_AND_THROW("Failed to get config region info");
@@ -82,7 +82,7 @@ void PCIDevice::read_capabilities(const int device_fd)
     spdlog::info("Walking PCI capability list starting at 0x{0:x}", config_header_.capabilities_pointer);
 
     uint8_t cap_ptr = config_header_.capabilities_pointer;
-    
+
     while (cap_ptr != 0)
     {
         capability_node cap_node;

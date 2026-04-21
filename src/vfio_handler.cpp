@@ -76,7 +76,6 @@ void VfioHandle::open_group(int iommu_group)
     {
         LOG_AND_THROW("Failed to set IOMMU type");
     }
-
 }
 
 void VfioHandle::get_device_fd(const std::string& bdf)
