@@ -18,6 +18,7 @@ set(src_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(sources
     ${src_dir}/vfio_handler.cpp
     ${src_dir}/pci_device.cpp
+    ${src_dir}/virtio_device.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
