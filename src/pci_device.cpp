@@ -107,7 +107,7 @@ void PCIDevice::read_capabilities(const int device_fd)
 
         spdlog::info("Found capability at 0x{0:x}: ID=0x{1:x}, Next=0x{2:x}, Len={3}", cap_ptr, cap_node.cap_id, cap_node.next_ptr, cap_node.cap_len);
 
-        capabilities_.push_back(cap_node);
+        capabilities_.push_back({cap_ptr, cap_node});
 
         // Move to the next capability in the list
         cap_ptr = cap_node.next_ptr;

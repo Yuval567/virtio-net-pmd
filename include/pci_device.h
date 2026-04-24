@@ -5,7 +5,7 @@
 
 #include "data_structures/pci_config_header.h"
 #include "data_structures/mapped_bar.h"
-#include "data_structures/capability_node.h"
+#include "data_structures/capability.h"
 
 class PCIDevice
 {
@@ -14,6 +14,9 @@ public:
     ~PCIDevice();
 
     const pci_config_header_type0& get_config_header() const noexcept { return config_header_; }
+    const std::vector<mapped_bar>& get_mapped_bars() const noexcept { return mapped_bars_; }
+    const std::vector<pci_capability>& get_capabilities() const noexcept { return capabilities_; }
+    const vfio_region_info& get_config_region() const noexcept { return config_region_; }
 
 private:
     void read_config_header(const int device_fd);
@@ -22,6 +25,6 @@ private:
 
     vfio_region_info config_region_;
     pci_config_header_type0 config_header_;
-    std::vector<MappedBar> mapped_bars_;
-    std::vector<capability_node> capabilities_;
+    std::vector<mapped_bar> mapped_bars_;
+    std::vector<pci_capability> capabilities_;
 };
