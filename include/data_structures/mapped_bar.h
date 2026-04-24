@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-struct MappedBar
+struct mapped_bar
 {
     void* address;  // Pointer to the mapped BAR region
     uint64_t size;  // Size of the mapped region 
