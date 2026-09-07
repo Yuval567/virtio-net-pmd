@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 BUILD_TYPE="Debug"
 BUILD_DIR="build"
@@ -14,6 +15,6 @@ if [[ ! -f "${TOOLCHAIN_FILE}" ]]; then
 	echo "[setup] ERROR: Conan toolchain file not found at ${TOOLCHAIN_FILE}" >&2
 	exit 1
 fi
-cmake -S "${PROJECT_ROOT}" -B "${BUILD_DIR}" -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+cmake -S . -B "${BUILD_DIR}" -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
 cmake --build "${BUILD_DIR}" --config "${BUILD_TYPE}"
 

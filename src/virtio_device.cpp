@@ -4,7 +4,7 @@
 
 #include <spdlog/spdlog.h>
 
-VirtioDevice::VirtioDevice(const int device_fd,const PCIDevice& pci_device) 
+VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device)
     : device_fd_(device_fd), pci_device_(pci_device)
 {
     spdlog::info("Vendor ID: 0x{:x}", pci_device.get_config_header().vendor_id);
@@ -48,7 +48,7 @@ void VirtioDevice::initialize_capabilites()
             }
 
             spdlog::info("VirtIO Capability Details: cfg_type={}, bar_index={}, id={}, offset=0x{:x}, length=0x{:x}",
-                         virtio_cap.cfg_type, virtio_cap.bar_index, virtio_cap.id, virtio_cap.offset, virtio_cap.length);
+                virtio_cap.cfg_type, virtio_cap.bar_index, virtio_cap.id, virtio_cap.offset, virtio_cap.length);
         }
     }
 }

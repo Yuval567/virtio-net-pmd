@@ -6,12 +6,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdexcept>
+#include <filesystem>
 
 #include "spdlog/spdlog.h"
 
-VfioHandle::VfioHandle(const std::string& bdf, int iommu_group)
+VfioHandle::VfioHandle(const std::string& bdf)
     : container_fd_(-1), group_fd_(-1), device_fd_(-1)
 {
+    const int iommu_group = get_iommu_group(bdf);
+
     open_container();
     open_group(iommu_group);
     get_device_fd(bdf);
@@ -84,5 +87,26 @@ void VfioHandle::get_device_fd(const std::string& bdf)
     if (device_fd_ < 0)
     {
         LOG_AND_THROW("Failed to get device FD");
+    }
+}
+
+int VfioHandle::get_iommu_group(const std::string& bdf)
+{
+    const std::string group_link = "/sys/bus/pci/devices/" + bdf + "/iommu_group";
+
+    std::error_code ec;
+    const std::filesystem::path target = std::filesystem::read_symlink(group_link, ec);
+    if (ec)
+    {
+        LOG_AND_THROW("Failed to resolve IOMMU group for device " + bdf);
+    }
+
+    try
+    {
+        return std::stoi(target.filename().string());
+    }
+    catch (const std::exception&)
+    {
+        LOG_AND_THROW("Failed to parse IOMMU group number for device " + bdf);
     }
 }
