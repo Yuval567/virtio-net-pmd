@@ -22,11 +22,95 @@ VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device)
     }
 
     initialize_capabilites();
+
+    reset_device();
+    negotiate_features();
+
+    spdlog::info("VirtIO device status handshake complete (FEATURES_OK). Waiting on virtqueue setup before DRIVER_OK.");
 }
 
 VirtioDevice::~VirtioDevice()
 {
 
+}
+
+void VirtioDevice::reset_device()
+{
+    common_cfg_->device_status = 0;
+
+    constexpr int max_attempts = 1'000'000;
+    int attempts = 0;
+    while (common_cfg_->device_status != 0)
+    {
+        if (++attempts >= max_attempts)
+        {
+            LOG_AND_THROW("Timed out waiting for device reset to complete");
+        }
+    }
+
+    spdlog::info("VirtIO device reset complete");
+}
+
+uint64_t VirtioDevice::read_device_features() const
+{
+    common_cfg_->device_feature_select = 0;
+    const uint32_t features_low = common_cfg_->device_feature;
+    common_cfg_->device_feature_select = 1;
+    const uint32_t features_high = common_cfg_->device_feature;
+
+    return (static_cast<uint64_t>(features_high) << 32) | features_low;
+}
+
+void VirtioDevice::write_driver_features(uint64_t features)
+{
+    common_cfg_->driver_feature_select = 0;
+    common_cfg_->driver_feature = static_cast<uint32_t>(features);
+    common_cfg_->driver_feature_select = 1;
+    common_cfg_->driver_feature = static_cast<uint32_t>(features >> 32);
+}
+
+void VirtioDevice::negotiate_features()
+{
+    // 1. ACKNOWLEDGE: we have noticed the device.
+    common_cfg_->device_status |= VIRTIO_STATUS_ACKNOWLEDGE;
+
+    // 2. DRIVER: we know how to drive the device.
+    common_cfg_->device_status |= VIRTIO_STATUS_DRIVER;
+
+    // 3. Read what the device offers
+    const uint64_t device_features = read_device_features();
+    spdlog::info("Device offers features: 0x{:016x}", device_features);
+
+    if (!(device_features & VIRTIO_F_VERSION_1_BIT))
+    {
+        common_cfg_->device_status |= VIRTIO_STATUS_FAILED;
+        LOG_AND_THROW("Device does not offer VIRTIO_F_VERSION_1 (legacy-only devices are not supported)");
+    }
+
+    const uint64_t negotiated_features = device_features & VIRTIO_SUPPORTED_FEATURES;
+
+    // 4. Tell the device which of its offered features we accept.
+    write_driver_features(negotiated_features);
+
+    // 5. FEATURES_OK: feature negotiation is complete.
+    common_cfg_->device_status |= VIRTIO_STATUS_FEATURES_OK;
+
+    // 6. Re-read status: the device MAY reject our feature subset by clearing FEATURES_OK.
+    const uint8_t status = common_cfg_->device_status;
+    if (!(status & VIRTIO_STATUS_FEATURES_OK))
+    {
+        common_cfg_->device_status |= VIRTIO_STATUS_FAILED;
+        LOG_AND_THROW("Device rejected feature negotiation (FEATURES_OK was cleared)");
+    }
+
+    spdlog::info("Negotiated features: 0x{:016x}", negotiated_features);
+}
+
+void VirtioDevice::set_driver_ok()
+{
+    // 7. DRIVER_OK: the device is now "live" and may start processing virtqueues.
+    common_cfg_->device_status |= VIRTIO_STATUS_DRIVER_OK;
+    spdlog::info("VirtIO device is live (DRIVER_OK set)");
 }
 
 void VirtioDevice::initialize_capabilites()
@@ -76,7 +160,7 @@ void VirtioDevice::initialize_capabilites()
             switch (virtio_cap.cfg_type)
             {
             case VIRTIO_PCI_CAP_COMMON_CFG:
-                common_cfg_ = reinterpret_cast<virtio_pci_common_cfg*>(bar_address);
+                common_cfg_ = reinterpret_cast<volatile virtio_pci_common_cfg*>(bar_address);
                 common_cfg_length_ = virtio_cap.length;
                 break;
 
