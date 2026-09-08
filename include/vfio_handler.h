@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
+
+#include "data_structures/dma_memory_region.h"
 
 class VfioHandle
 {
@@ -9,6 +12,9 @@ public:
     ~VfioHandle();
 
     int get_device_fd() const noexcept { return device_fd_; }
+
+    dma_memory_region allocate_dma_memory(uint64_t size);
+    void free_dma_memory(const dma_memory_region& memory);
 
 private:
     void open_container();
