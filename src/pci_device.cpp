@@ -29,6 +29,18 @@ PCIDevice::~PCIDevice()
     }
 }
 
+const mapped_bar* PCIDevice::find_bar(uint8_t bar_index) const noexcept
+{
+    for (const auto& bar : mapped_bars_)
+    {
+        if (bar.bar_index == bar_index)
+        {
+            return &bar;
+        }
+    }
+    return nullptr;
+}
+
 void PCIDevice::read_config_header(const int device_fd)
 {
     config_region_ = { .argsz = sizeof(config_region_), .index = VFIO_PCI_CONFIG_REGION_INDEX };
@@ -72,7 +84,7 @@ void PCIDevice::map_bar_regions(const int device_fd)
                 LOG_AND_THROW("Failed to mmap BAR " + std::to_string(bar_index));
             }
 
-            mapped_bars_.emplace_back(mapped_addr, reg.size, reg.flags);
+            mapped_bars_.emplace_back(mapped_addr, reg.size, reg.flags, bar_index);
         }
     }
 }

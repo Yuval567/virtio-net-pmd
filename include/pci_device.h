@@ -18,6 +18,8 @@ public:
     const std::vector<pci_capability>& get_capabilities() const noexcept { return capabilities_; }
     const vfio_region_info& get_config_region() const noexcept { return config_region_; }
 
+    const mapped_bar* find_bar(uint8_t bar_index) const noexcept;
+
 private:
     void read_config_header(const int device_fd);
     void map_bar_regions(const int device_fd);
