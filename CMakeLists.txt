@@ -19,7 +19,6 @@ set(sources
     ${src_dir}/vfio_handler.cpp
     ${src_dir}/pci_device.cpp
     ${src_dir}/virtio_device.cpp
-    ${src_dir}/virtqueue.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )

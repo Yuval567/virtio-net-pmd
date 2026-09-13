@@ -33,8 +33,3 @@ constexpr uint64_t VIRTIO_F_VERSION_1_BIT = (1ULL << VIRTIO_F_VERSION_1);
 // must be real IOVAs mapped via VFIO_IOMMU_MAP_DMA - which is how we allocate DMA memory
 // anyway, so we always accept it.
 constexpr uint64_t VIRTIO_SUPPORTED_FEATURES = VIRTIO_F_VERSION_1_BIT | (1ULL << VIRTIO_F_ACCESS_PLATFORM);
-
-// VIRTIO 1.x net spec, section 5.1.2: without VIRTIO_NET_F_MQ, queue 0 is receiveq1 and
-// queue 1 is transmitq1.
-constexpr uint16_t VIRTIO_NET_RX_QUEUE_INDEX = 0;
-constexpr uint16_t VIRTIO_NET_TX_QUEUE_INDEX = 1;

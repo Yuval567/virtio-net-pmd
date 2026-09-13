@@ -1,15 +1,13 @@
 #include "virtio_device.h"
 #include "constants.h"
 #include "utils.h"
-#include "vfio_handler.h"
-#include "virtqueue.h"
 
 #include <unistd.h>
 
 #include <spdlog/spdlog.h>
 
-VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device, VfioHandle& vfio_handle)
-    : device_fd_(device_fd), pci_device_(pci_device), vfio_handle_(vfio_handle)
+VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device)
+    : device_fd_(device_fd), pci_device_(pci_device)
 {
     spdlog::info("Vendor ID: 0x{:x}", pci_device.get_config_header().vendor_id);
     spdlog::info("Device ID: 0x{:x}", pci_device.get_config_header().device_id);
@@ -27,8 +25,8 @@ VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device, Vfi
 
     reset_device();
     negotiate_features();
-    setup_virtqueues();
-    set_driver_ok();
+
+    spdlog::info("VirtIO device status handshake complete (FEATURES_OK). Waiting on virtqueue setup before DRIVER_OK.");
 }
 
 VirtioDevice::~VirtioDevice()
@@ -106,34 +104,6 @@ void VirtioDevice::negotiate_features()
     }
 
     spdlog::info("Negotiated features: 0x{:016x}", negotiated_features);
-}
-
-void VirtioDevice::setup_virtqueue(uint16_t queue_index, std::unique_ptr<Virtqueue>& queue_slot)
-{
-    common_cfg_->queue_select = queue_index;
-
-    const uint16_t queue_size = common_cfg_->queue_size;
-    if (queue_size == 0)
-    {
-        LOG_AND_THROW("Device reports queue " + std::to_string(queue_index) + " as unavailable (queue_size == 0)");
-    }
-
-    queue_slot = std::make_unique<Virtqueue>(vfio_handle_, queue_size);
-    queue_slot->set_notify_off(common_cfg_->queue_notify_off);
-
-    common_cfg_->queue_desc = queue_slot->desc_iova();
-    common_cfg_->queue_driver = queue_slot->avail_iova();
-    common_cfg_->queue_device = queue_slot->used_iova();
-    common_cfg_->queue_enable = 1;
-
-    spdlog::info("Virtqueue {} ready: size={}, desc_iova=0x{:x}, avail_iova=0x{:x}, used_iova=0x{:x}, notify_off={}",
-        queue_index, queue_size, queue_slot->desc_iova(), queue_slot->avail_iova(), queue_slot->used_iova(), queue_slot->notify_off());
-}
-
-void VirtioDevice::setup_virtqueues()
-{
-    setup_virtqueue(VIRTIO_NET_RX_QUEUE_INDEX, rx_queue_);
-    setup_virtqueue(VIRTIO_NET_TX_QUEUE_INDEX, tx_queue_);
 }
 
 void VirtioDevice::set_driver_ok()
