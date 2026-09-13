@@ -3,12 +3,8 @@
 #include "utils.h"
 #include "vfio_handler.h"
 #include "virtqueue.h"
-#include "data_structures/virtqueue_layout.h"
-#include "data_structures/virtio_net_hdr.h"
 
 #include <unistd.h>
-#include <cstring>
-#include <chrono>
 
 #include <spdlog/spdlog.h>
 
@@ -33,8 +29,6 @@ VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device, Vfi
     negotiate_features();
     setup_virtqueues();
     set_driver_ok();
-
-    post_rx_buffers();
 }
 
 VirtioDevice::~VirtioDevice()
@@ -147,91 +141,6 @@ void VirtioDevice::set_driver_ok()
     // 7. DRIVER_OK: the device is now "live" and may start processing virtqueues.
     common_cfg_->device_status |= VIRTIO_STATUS_DRIVER_OK;
     spdlog::info("VirtIO device is live (DRIVER_OK set)");
-}
-
-void VirtioDevice::notify_queue(uint16_t queue_index, const Virtqueue& queue)
-{
-    // VIRTIO 1.x spec, section 4.1.4.4: without VIRTIO_F_NOTIFICATION_DATA (not negotiated
-    // here), a kick is just the queue's own index written to its notify offset.
-    volatile uint16_t* notify_addr = reinterpret_cast<volatile uint16_t*>(
-        notify_base_ + static_cast<uint64_t>(queue.notify_off()) * notify_off_multiplier_);
-    *notify_addr = queue_index;
-}
-
-void VirtioDevice::post_rx_buffers()
-{
-    for (uint16_t slot = 0; slot < rx_queue_->size(); ++slot)
-    {
-        rx_queue_->publish(slot, VIRTQUEUE_BUFFER_SIZE, VIRTQ_DESC_F_WRITE);
-    }
-
-    notify_queue(VIRTIO_NET_RX_QUEUE_INDEX, *rx_queue_);
-
-    spdlog::info("Posted {} RX buffers and notified the device", rx_queue_->size());
-}
-
-void VirtioDevice::send_test_packet()
-{
-    uint8_t* buffer = static_cast<uint8_t*>(tx_queue_->buffer_address(0));
-
-    virtio_net_hdr hdr{};
-    hdr.gso_type = VIRTIO_NET_HDR_GSO_NONE;
-    std::memcpy(buffer, &hdr, sizeof(hdr));
-
-    // Minimal Ethernet II frame: broadcast destination, a locally-administered placeholder
-    // source MAC, and ethertype 0x9000 (historically used for loopback/link-test frames -
-    // unlikely to be mistaken for real traffic by anything listening).
-    static constexpr uint8_t frame[] = {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff,             // dst: broadcast
-        0x02, 0x00, 0x00, 0x00, 0x00, 0x01,             // src: locally administered
-        0x90, 0x00,                                     // ethertype: loopback/test
-        'v', 'i', 'r', 't', 'i', 'o', '-', 'n', 'e', 't', ' ', 'h', 'e', 'l', 'l', 'o',
-    };
-    std::memcpy(buffer + sizeof(hdr), frame, sizeof(frame));
-
-    const uint32_t total_len = sizeof(hdr) + sizeof(frame);
-    tx_queue_->publish(0, total_len, 0);
-    notify_queue(VIRTIO_NET_TX_QUEUE_INDEX, *tx_queue_);
-
-    spdlog::info("Sent test packet: {} bytes ({} header + {} frame)", total_len, sizeof(hdr), sizeof(frame));
-}
-
-void VirtioDevice::poll_completions(int timeout_ms)
-{
-    bool tx_done = false;
-    bool rx_done = false;
-
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
-
-    while (std::chrono::steady_clock::now() < deadline && (!tx_done || !rx_done))
-    {
-        if (!tx_done && tx_queue_->has_completed())
-        {
-            const virtq_used_elem elem = tx_queue_->take_completed();
-            spdlog::info("TX completed: descriptor {} ({} bytes written by device)", elem.id, elem.len);
-            tx_done = true;
-        }
-
-        if (!rx_done && rx_queue_->has_completed())
-        {
-            const virtq_used_elem elem = rx_queue_->take_completed();
-            spdlog::info("RX completed: descriptor {} ({} bytes)", elem.id, elem.len);
-            rx_done = true;
-
-            // Immediately hand the buffer back to the device so RX keeps flowing.
-            rx_queue_->publish(static_cast<uint16_t>(elem.id), VIRTQUEUE_BUFFER_SIZE, VIRTQ_DESC_F_WRITE);
-            notify_queue(VIRTIO_NET_RX_QUEUE_INDEX, *rx_queue_);
-        }
-    }
-
-    if (!tx_done)
-    {
-        spdlog::warn("Timed out waiting for TX completion");
-    }
-    if (!rx_done)
-    {
-        spdlog::warn("Timed out waiting for RX completion (no inbound traffic seen)");
-    }
 }
 
 void VirtioDevice::initialize_capabilites()

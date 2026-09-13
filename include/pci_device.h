@@ -22,7 +22,6 @@ public:
 
 private:
     void read_config_header(const int device_fd);
-    void enable_bus_mastering(const int device_fd);
     void map_bar_regions(const int device_fd);
     void read_capabilities(const int device_fd);
 
