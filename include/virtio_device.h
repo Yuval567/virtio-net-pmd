@@ -13,6 +13,15 @@ public:
     VirtioDevice(const int device_fd, const PCIDevice& pci_device, VfioHandle& vfio_handle);
     ~VirtioDevice();
 
+    // Builds and transmits one minimal Ethernet frame from tx_queue_ slot 0, as an
+    // end-to-end smoke test of the datapath.
+    void send_test_packet();
+
+    // Polls both queues' used rings for up to `timeout_ms`, logging (and, for RX, freeing
+    // back to the device) any completions seen. Returns once at least one completion has
+    // been observed on each queue, or the timeout elapses.
+    void poll_completions(int timeout_ms);
+
 private:
     void initialize_capabilites();
     void reset_device();
@@ -20,6 +29,8 @@ private:
     void setup_virtqueues();
     void setup_virtqueue(uint16_t queue_index, std::unique_ptr<Virtqueue>& queue_slot);
     void set_driver_ok();
+    void post_rx_buffers();
+    void notify_queue(uint16_t queue_index, const Virtqueue& queue);
 
     uint64_t read_device_features() const;
     void write_driver_features(uint64_t features);

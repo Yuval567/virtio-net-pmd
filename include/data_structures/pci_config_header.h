@@ -2,6 +2,11 @@
 
 #include <cstdint>
 
+// PCI Local Bus spec: bits of the 16-bit command register (pci_config_header_type0::command).
+constexpr uint16_t PCI_COMMAND_IO_SPACE = 0x1;     // enables responding to I/O space accesses
+constexpr uint16_t PCI_COMMAND_MEMORY_SPACE = 0x2; // enables responding to memory space accesses (BARs)
+constexpr uint16_t PCI_COMMAND_BUS_MASTER = 0x4;   // lets the device initiate its own DMA reads/writes
+
 struct pci_config_header_type0
 {
     uint16_t vendor_id;                     // Vendor ID

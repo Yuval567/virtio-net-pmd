@@ -12,5 +12,8 @@ int main()
     PCIDevice pci_device(vfio_handler.get_device_fd());
     VirtioDevice virtio_device(vfio_handler.get_device_fd(), pci_device, vfio_handler);
 
+    virtio_device.send_test_packet();
+    virtio_device.poll_completions(2000);
+
     return 0;
 }

@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <cstddef>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/vfio.h>
@@ -13,6 +14,7 @@
 PCIDevice::PCIDevice(const int device_fd)
 {
     read_config_header(device_fd);
+    enable_bus_mastering(device_fd);
     map_bar_regions(device_fd);
     read_capabilities(device_fd);
 }
@@ -61,6 +63,26 @@ void PCIDevice::read_config_header(const int device_fd)
     }
 
     spdlog::info("PCI Config Header read successfully!");
+}
+
+void PCIDevice::enable_bus_mastering(const int device_fd)
+{
+    // VFIO does not enable this for us. Without Bus Master Enable, the device can't
+    // initiate its own DMA reads/writes - it would never be able to read our virtqueue
+    // descriptors or write back the used ring, even though ordinary MMIO reads/writes we
+    // issue to its BARs (config registers, notify) still work fine.
+    const uint16_t command = config_header_.command | PCI_COMMAND_MEMORY_SPACE | PCI_COMMAND_BUS_MASTER;
+
+    const off_t pos = static_cast<off_t>(config_region_.offset + offsetof(pci_config_header_type0, command));
+    const ssize_t ret = pwrite(device_fd, &command, sizeof(command), pos);
+    if (ret != static_cast<ssize_t>(sizeof(command)))
+    {
+        LOG_AND_THROW("Failed to enable PCI bus mastering");
+    }
+
+    config_header_.command = command;
+
+    spdlog::info("PCI bus mastering enabled (command register = 0x{:x})", command);
 }
 
 void PCIDevice::map_bar_regions(const int device_fd)

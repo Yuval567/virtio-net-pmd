@@ -38,3 +38,7 @@ constexpr uint64_t VIRTIO_SUPPORTED_FEATURES = VIRTIO_F_VERSION_1_BIT | (1ULL <<
 // queue 1 is transmitq1.
 constexpr uint16_t VIRTIO_NET_RX_QUEUE_INDEX = 0;
 constexpr uint16_t VIRTIO_NET_TX_QUEUE_INDEX = 1;
+
+// Per-descriptor DMA buffer size: comfortably covers a max-size standard Ethernet frame
+// (1518 bytes) plus the 12-byte virtio_net_hdr, with no need for descriptor chaining.
+constexpr uint32_t VIRTQUEUE_BUFFER_SIZE = 2048;
