@@ -11,19 +11,18 @@ class VirtioDevice
 {
 public:
     VirtioDevice(const int device_fd, const PCIDevice& pci_device, VfioHandle& vfio_handle);
-    ~VirtioDevice();
     
     VirtioDevice(const VirtioDevice&) = delete;
     VirtioDevice& operator=(const VirtioDevice&) = delete;
 
-    void set_driver_ok();
+    std::unique_ptr<Virtqueue> create_virtqueue();
+
+    void start();
 
 private:
     void initialize_capabilites();
     void reset_device();
     void negotiate_features();
-    void setup_virtqueues();
-    void setup_virtqueue(uint16_t queue_index, std::unique_ptr<Virtqueue>& queue_slot);
 
     uint64_t read_device_features() const;
     void write_driver_features(uint64_t features);
@@ -39,6 +38,5 @@ private:
     volatile uint8_t* notify_base_ = nullptr;
     uint32_t notify_off_multiplier_ = 0;
 
-    std::unique_ptr<Virtqueue> rx_queue_;
-    std::unique_ptr<Virtqueue> tx_queue_;
+    uint16_t current_queue_index_ = 0;
 };

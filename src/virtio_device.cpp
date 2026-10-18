@@ -27,13 +27,6 @@ VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device, Vfi
 
     reset_device();
     negotiate_features();
-    setup_virtqueues();
-    set_driver_ok();
-}
-
-VirtioDevice::~VirtioDevice()
-{
-
 }
 
 void VirtioDevice::reset_device()
@@ -108,39 +101,35 @@ void VirtioDevice::negotiate_features()
     spdlog::info("Negotiated features: 0x{:016x}", negotiated_features);
 }
 
-void VirtioDevice::setup_virtqueue(uint16_t queue_index, std::unique_ptr<Virtqueue>& queue_slot)
-{
-    common_cfg_->queue_select = queue_index;
-
-    const uint16_t queue_size = common_cfg_->queue_size;
-    if (queue_size == 0)
-    {
-        LOG_AND_THROW("Device reports queue " + std::to_string(queue_index) + " as unavailable (queue_size == 0)");
-    }
-
-    queue_slot = std::make_unique<Virtqueue>(vfio_handle_, queue_size);
-    queue_slot->set_notify_off(common_cfg_->queue_notify_off);
-
-    common_cfg_->queue_desc = queue_slot->desc_iova();
-    common_cfg_->queue_driver = queue_slot->avail_iova();
-    common_cfg_->queue_device = queue_slot->used_iova();
-    common_cfg_->queue_enable = 1;
-
-    spdlog::info("Virtqueue {} ready: size={}, desc_iova=0x{:x}, avail_iova=0x{:x}, used_iova=0x{:x}, notify_off={}",
-        queue_index, queue_size, queue_slot->desc_iova(), queue_slot->avail_iova(), queue_slot->used_iova(), queue_slot->notify_off());
-}
-
-void VirtioDevice::setup_virtqueues()
-{
-    setup_virtqueue(VIRTIO_NET_RX_QUEUE_INDEX, rx_queue_);
-    setup_virtqueue(VIRTIO_NET_TX_QUEUE_INDEX, tx_queue_);
-}
-
-void VirtioDevice::set_driver_ok()
+void VirtioDevice::start()
 {
     // 7. DRIVER_OK: the device is now "live" and may start processing virtqueues.
     common_cfg_->device_status |= VIRTIO_STATUS_DRIVER_OK;
     spdlog::info("VirtIO device is live (DRIVER_OK set)");
+}
+
+std::unique_ptr<Virtqueue> VirtioDevice::create_virtqueue()
+{
+    common_cfg_->queue_select = current_queue_index_;
+    const uint16_t queue_size = common_cfg_->queue_size;
+    if (queue_size == 0)
+    {
+        LOG_AND_THROW("Device reports queue " + std::to_string(current_queue_index_) + " as unavailable (queue_size == 0)");
+    }
+
+    volatile uint16_t* notify_addr = reinterpret_cast<volatile uint16_t*>(notify_base_ + current_queue_index_ * notify_off_multiplier_);
+    auto queue = std::make_unique<Virtqueue>(vfio_handle_, current_queue_index_, queue_size, notify_addr);
+
+    common_cfg_->queue_desc = queue->desc_iova();
+    common_cfg_->queue_driver = queue->avail_iova();
+    common_cfg_->queue_device = queue->used_iova();
+    common_cfg_->queue_enable = 1;
+
+    spdlog::info("RX virtqueue ready: size={}, desc_iova=0x{:x}, avail_iova=0x{:x}, used_iova=0x{:x}",
+        queue_size, queue->desc_iova(), queue->avail_iova(), queue->used_iova());
+
+    current_queue_index_++;
+    return queue;
 }
 
 void VirtioDevice::initialize_capabilites()
