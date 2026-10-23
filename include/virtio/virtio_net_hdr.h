@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+/** @brief Header the device puts in front of every packet (VirtIO 1.x layout). */
 struct virtio_net_hdr
 {
     uint8_t flags;

@@ -83,6 +83,7 @@ void PCIDevice::enable_bus_mastering(const int device_fd)
 
 void PCIDevice::map_bar_regions(const int device_fd)
 {
+    // only regions the kernel allows to mmap get mapped
     for (unsigned int bar_index = VFIO_PCI_BAR0_REGION_INDEX; bar_index < VFIO_PCI_BAR5_REGION_INDEX; bar_index++)
     {
         vfio_region_info reg = { .argsz = sizeof(reg), .index = bar_index };

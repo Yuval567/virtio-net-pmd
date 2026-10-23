@@ -2,10 +2,18 @@
 
 #include <cstdint>
 
+/** @brief Represents a memory-mapped PCI BAR (Base Address Register) region. */
 struct mapped_bar
 {
-    void* address;      // Pointer to the mapped BAR region
-    uint64_t size;      // Size of the mapped region
-    uint32_t flags;     // Flags indicating the type of BAR (e.g., memory-mapped, I/O-mapped)
-    uint32_t bar_index; // PCI BAR index this region was mapped from
+    /** @brief Pointer to the mapped BAR region. */
+    void* address;
+
+    /** @brief Size of the mapped region. */
+    uint64_t size;
+
+    /** @brief Flags indicating the type of BAR (e.g., memory-mapped, I/O-mapped). */
+    uint32_t flags;
+
+    /** @brief PCI BAR index this region was mapped from. */
+    uint32_t bar_index;
 };

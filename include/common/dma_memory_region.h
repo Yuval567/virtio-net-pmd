@@ -2,13 +2,17 @@
 
 #include <cstdint>
 
-// A region of process memory mapped for device DMA. `iova` is the address the
-// device must use to reach this memory - identity-mapped to the process virtual
-// address here, since we only ever deal with a handful of small, non-overlapping
-// regions and a real IOVA allocator isn't needed at this scale.
+/**
+ * @brief Memory mapped for device DMA.
+ */
 struct dma_memory_region
 {
+    /** @brief Virtual address of the region. */
     void* address;
+
+    /** @brief IOVA of the region, as the device sees it. */
     uint64_t iova;
+
+    /** @brief Size of the region in bytes. */
     uint64_t size;
 };

@@ -2,6 +2,13 @@
 
 #include <cstdint>
 
+/**
+ * @brief Virtio PCI common configuration structure.
+ *
+ * This structure represents the common configuration registers for a Virtio device
+ * that is accessed through PCI. It contains fields for device features, driver features,
+ * queue configuration, and device status.
+ */
 struct virtio_pci_common_cfg
 {
     // About the whole device

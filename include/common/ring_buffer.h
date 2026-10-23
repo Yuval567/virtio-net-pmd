@@ -6,11 +6,21 @@
 #include <optional>
 #include <stdexcept>
 
-// Lock-free Single-Producer Single-Consumer (SPSC) bounded ring buffer.
+/**
+ * @brief Lock-free Single-Producer Single-Consumer (SPSC) bounded ring buffer.
+ *
+ * One slot is always left empty to tell full from empty, so it holds at most
+ * capacity - 1 items. The burst variants move as many items as fit, the bulk
+ * variants move all of them or nothing.
+ */
 template <typename T>
 class RingBuffer
 {
 public:
+    /** 
+     * @param capacity Number of slots, must be a non-zero power of 2. 
+     * @throws std::invalid_argument if capacity is not a non-zero power of 2.
+     */
     explicit RingBuffer(size_t capacity)
         : capacity_(capacity), mask_(capacity - 1),
         buffer_(std::make_unique<T[]>(capacity)), head_(0), tail_(0)
@@ -24,6 +34,17 @@ public:
     RingBuffer(const RingBuffer&) = delete;
     RingBuffer& operator=(const RingBuffer&) = delete;
 
+    /** @return The number of slots. */
+    size_t capacity() const noexcept
+    {
+        return capacity_;
+    }
+
+    /** 
+     * @brief Adds one item. 
+     * @param item The item to add.
+     * @return false if full. 
+     */
     bool enqueue_elem(const T& item) noexcept
     {
         const size_t cur_head = head_.load(std::memory_order_relaxed);
@@ -41,6 +62,12 @@ public:
         return true;
     }
 
+    /** 
+     * @brief Adds up to count items. 
+     * @param items The items to add.
+     * @param count The number of items to add.
+     * @return Number added. 
+     */
     size_t enqueue_burst(const T* items, size_t count) noexcept
     {
         if (count == 0) return 0;
@@ -61,6 +88,12 @@ public:
         return enqueue_count;
     }
 
+    /** 
+     * @brief Adds all count items or none. 
+     * @param items The items to add.
+     * @param count The number of items to add.
+     * @return false if there is not enough room.
+     */
     bool enqueue_bulk(const T* items, size_t count) noexcept
     {
         const size_t cur_head = head_.load(std::memory_order_relaxed);
@@ -82,6 +115,11 @@ public:
         return true;
     }
 
+    /** 
+     * @brief Removes one item. 
+     * @param item The item to remove.
+     * @return false if empty. 
+     */
     bool dequeue_elem(T& item) noexcept
     {
         const size_t cur_tail = tail_.load(std::memory_order_relaxed);
@@ -98,6 +136,12 @@ public:
         return true;
     }
 
+    /** 
+     * @brief Removes up to max_items items. 
+     * @param output The items to remove.
+     * @param max_items The maximum number of items to remove.
+     * @return Number removed. 
+     */
     size_t dequeue_burst(T* output, size_t max_items) noexcept
     {
         if (max_items == 0) return 0;
@@ -118,6 +162,12 @@ public:
         return count;
     }
 
+    /** 
+     * @brief Removes exactly count items or none. 
+     * @param output The items to remove.
+     * @param count The number of items to remove.
+     * @return false if fewer are available. 
+     * */
     bool dequeue_bulk(T* output, size_t count) noexcept
     {
         const size_t cur_tail = tail_.load(std::memory_order_relaxed);
@@ -137,11 +187,6 @@ public:
         tail_.store((cur_tail + count) & mask_, std::memory_order_release);
 
         return true;
-    }
-
-    size_t capacity() const noexcept
-    {
-        return capacity_;
     }
 
 private:

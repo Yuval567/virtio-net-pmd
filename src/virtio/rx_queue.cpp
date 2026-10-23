@@ -48,10 +48,7 @@ void RxQueue::refill(uint32_t count)
     const uint32_t published = virtqueue_->publish_burst(refill_mbufs_scratch_.get(), static_cast<uint16_t>(allocated), VIRTQ_DESC_F_WRITE);
     if (published < allocated)
     {
-        // No free descriptor slots for the rest right now (e.g. the app is holding onto a lot of
-        // received mbufs) - hand the unused ones back to the pool instead of leaking them. The
-        // debt for them stays in pending_refill_ and is retried on a later call; until then, the
-        // device simply has fewer RX buffers available and will drop what it can't receive.
+        // Some buffers couldn't be published, return them to the pool for retry later
         mempool_.free_bulk(refill_mbufs_scratch_.get() + published, allocated - published);
     }
 
@@ -61,6 +58,8 @@ void RxQueue::refill(uint32_t count)
 uint32_t RxQueue::receive_burst(mbuf** out_mbufs, uint32_t max_packets)
 {
     const uint32_t request = std::min<uint32_t>(max_packets, virtqueue_->queue_size);
+
+    // used ring is capped at queue_size per call
     const uint32_t num_completed = virtqueue_->pop_used_burst(out_mbufs, request);
 
     uint32_t num_received = 0;
@@ -81,6 +80,7 @@ uint32_t RxQueue::receive_burst(mbuf** out_mbufs, uint32_t max_packets)
         out_mbufs[num_received++] = buf; // compact in place; safe since num_received <= i always
     }
 
-    refill(num_completed); // every consumed descriptor - delivered or dropped - needs a replacement
+    // every consumed descriptor - delivered or dropped - needs a replacement
+    refill(num_completed);
     return num_received;
 }

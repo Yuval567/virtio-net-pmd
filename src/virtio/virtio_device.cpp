@@ -32,6 +32,7 @@ VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device, Vfi
 
 void VirtioDevice::reset_device()
 {
+    // writing 0 resets the device; it reads back 0 once the reset is done
     common_cfg_->device_status = 0;
 
     constexpr int max_attempts = 1'000'000;
