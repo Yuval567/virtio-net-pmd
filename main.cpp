@@ -5,10 +5,12 @@
 #include "common/mbuf_mempool.h"
 
 #include <array>
+#include <string>
+#include <string_view>
 
 #include "spdlog/spdlog.h"
 
-#define DEVICE_BDF "0000:00:05.0"
+constexpr std::string_view DEVICE_BDF = "0000:00:05.0";
 
 constexpr uint32_t RX_BURST_SIZE = 32;
 constexpr uint16_t BUFFER_SIZE = 2048;
@@ -51,7 +53,7 @@ static void rx_loop(RxQueue& rx_queue, MbufMempool& mempool)
 
 int main()
 {
-    VfioHandle vfio_handler(DEVICE_BDF);
+    VfioHandle vfio_handler{std::string(DEVICE_BDF)};
     PCIDevice pci_device(vfio_handler.get_device_fd());
     VirtioDevice virtio_device(vfio_handler.get_device_fd(), pci_device, vfio_handler);
 
