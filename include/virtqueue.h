@@ -1,9 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 #include "vfio_handler.h"
 #include "data_structures/dma_memory_region.h"
+#include "data_structures/mbuf.h"
+#include "data_structures/ring_buffer.h"
 #include "data_structures/virtqueue_layout.h"
 
 class Virtqueue
@@ -25,7 +28,10 @@ public:
     inline uint64_t avail_iova() const noexcept { return avail_region_.iova; }
     inline uint64_t used_iova() const noexcept { return used_region_.iova; }
 
-    inline void notify() const noexcept;
+    inline void notify() const noexcept { *notify_addr_ = queue_index; }
+
+    uint32_t publish_burst(mbuf** bufs, uint16_t num_buffers, uint16_t flags);
+    uint32_t pop_used_burst(mbuf** out, uint32_t max_count) noexcept;
 
     const uint16_t queue_size;
     const uint16_t queue_index;
@@ -34,6 +40,11 @@ private:
     VfioHandle& vfio_handle_;
 
     volatile uint16_t* notify_addr_;
+    uint16_t last_used_idx_ = 0;
+    RingBuffer<uint16_t> free_slots_;
+
+    std::unique_ptr<uint16_t[]> slot_scratch_;
+    std::unique_ptr<mbuf* []> slot_ring_;
 
     dma_memory_region desc_region_;
     dma_memory_region avail_region_;
