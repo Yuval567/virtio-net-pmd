@@ -4,14 +4,15 @@ import argparse
 
 from scapy.all import Ether, Raw, sendp
 
-DST_MAC = "ff:ff:ff:ff:ff:ff"
+SRC_MAC = "BB:BB:BB:BB:BB:BB"
+DST_MAC = "FF:FF:FF:FF:FF:FF"
 
 parser = argparse.ArgumentParser(description="Send test packets to the PMD's device")
 parser.add_argument("iface", help="host interface connected to the PMD's device (e.g. tap0)")
 parser.add_argument("count", type=int, help="number of packets to send")
 args = parser.parse_args()
 
-for seq in range(args.count):
-    pkt = Ether(dst=DST_MAC, type=0x88B5) / Raw(f"hello pmd #{seq}".encode().ljust(46, b"\x00"))
-    sendp(pkt, iface=args.iface, verbose=False)
-    print(f"sent #{seq}, len={len(pkt)}")
+payload = b"\xAA" * 1500
+pkt = Ether(src=SRC_MAC, dst=DST_MAC, type=0x05DC) / Raw(payload)
+
+sendp(pkt, iface=args.iface, verbose=False, count=args.count)
