@@ -3,11 +3,11 @@
 #include <cstdint>
 #include <memory>
 
-#include "vfio_handler.h"
-#include "data_structures/dma_memory_region.h"
-#include "data_structures/mbuf.h"
-#include "data_structures/ring_buffer.h"
-#include "data_structures/virtqueue_layout.h"
+#include "vfio/vfio_handler.h"
+#include "common/dma_memory_region.h"
+#include "common/mbuf.h"
+#include "common/ring_buffer.h"
+#include "virtio/virtqueue_layout.h"
 
 class Virtqueue
 {

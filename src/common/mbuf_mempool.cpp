@@ -1,5 +1,5 @@
-#include "data_structures/mbuf_mempool.h"
-#include "utils.h"
+#include "common/mbuf_mempool.h"
+#include "common/utils.h"
 
 #include "spdlog/spdlog.h"
 

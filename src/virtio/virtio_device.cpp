@@ -1,8 +1,9 @@
-#include "virtio_device.h"
-#include "constants.h"
-#include "utils.h"
-#include "vfio_handler.h"
-#include "virtqueue.h"
+#include "virtio/virtio_device.h"
+#include "virtio/constants.h"
+#include "virtio/virtio_capability.h"
+#include "common/utils.h"
+#include "vfio/vfio_handler.h"
+#include "virtio/virtqueue.h"
 
 #include <unistd.h>
 
@@ -137,7 +138,7 @@ void VirtioDevice::initialize_capabilites()
 {
     for (const auto& cap : pci_device_.get_capabilities())
     {
-        if (cap.node.cap_id == VIRTIO_VENDOR_SPECIFIC_CAP_ID)
+        if (cap.node.cap_id == PCI_CAP_ID_VENDOR_SPECIFIC)
         {
             virtio_capability virtio_cap;
 

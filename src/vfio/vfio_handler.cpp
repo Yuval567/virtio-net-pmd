@@ -1,5 +1,5 @@
-#include "vfio_handler.h"
-#include "utils.h"
+#include "vfio/vfio_handler.h"
+#include "common/utils.h"
 
 #include <linux/vfio.h>
 #include <sys/ioctl.h>

@@ -16,12 +16,12 @@ set(src_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 
 set(sources
-    ${src_dir}/vfio_handler.cpp
-    ${src_dir}/pci_device.cpp
-    ${src_dir}/virtio_device.cpp
-    ${src_dir}/virtqueue.cpp
-    ${src_dir}/rx_queue.cpp
-    ${src_dir}/mbuf_mempool.cpp
+    ${src_dir}/vfio/vfio_handler.cpp
+    ${src_dir}/pcie/pci_device.cpp
+    ${src_dir}/virtio/virtio_device.cpp
+    ${src_dir}/virtio/virtqueue.cpp
+    ${src_dir}/virtio/rx_queue.cpp
+    ${src_dir}/common/mbuf_mempool.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )

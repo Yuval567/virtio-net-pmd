@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdint>
 
-#include "data_structures/dma_memory_region.h"
+#include "common/dma_memory_region.h"
 
 class VfioHandle
 {

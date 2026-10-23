@@ -3,9 +3,9 @@
 #include <vector>
 #include <linux/vfio.h>
 
-#include "data_structures/pci_config_header.h"
-#include "data_structures/mapped_bar.h"
-#include "data_structures/capability.h"
+#include "pcie/pci_config_header.h"
+#include "pcie/mapped_bar.h"
+#include "pcie/capability.h"
 
 class PCIDevice
 {

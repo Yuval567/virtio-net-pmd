@@ -1,5 +1,5 @@
-#include "pci_device.h"
-#include "utils.h"
+#include "pcie/pci_device.h"
+#include "common/utils.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -115,16 +115,16 @@ void PCIDevice::read_capabilities(const int device_fd)
 
     while (cap_ptr != 0)
     {
-        capability_node cap_node;
+        pci_capability_node cap_node;
 
-        if (cap_ptr + sizeof(capability_node) > config_region_.size)
+        if (cap_ptr + sizeof(pci_capability_node) > config_region_.size)
         {
             throw std::runtime_error("Config read out of bounds");
         }
 
         off_t pos = static_cast<off_t>(config_region_.offset + cap_ptr);
-        ssize_t ret = pread(device_fd, &cap_node, sizeof(capability_node), pos);
-        if (ret != static_cast<ssize_t>(sizeof(capability_node)))
+        ssize_t ret = pread(device_fd, &cap_node, sizeof(pci_capability_node), pos);
+        if (ret != static_cast<ssize_t>(sizeof(pci_capability_node)))
         {
             LOG_AND_THROW("Failed to read capability ID at 0x" + std::to_string(pos));
         }
@@ -137,7 +137,7 @@ void PCIDevice::read_capabilities(const int device_fd)
 
         spdlog::info("Found capability at 0x{0:x}: ID=0x{1:x}, Next=0x{2:x}, Len={3}", cap_ptr, cap_node.cap_id, cap_node.next_ptr, cap_node.cap_len);
 
-        capabilities_.push_back({cap_ptr, cap_node});
+        capabilities_.push_back({ cap_ptr, cap_node });
 
         // Move to the next capability in the list
         cap_ptr = cap_node.next_ptr;

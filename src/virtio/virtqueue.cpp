@@ -1,7 +1,7 @@
-#include "virtqueue.h"
-#include "utils.h"
-#include "vfio_handler.h"
-#include "data_structures/virtqueue_layout.h"
+#include "virtio/virtqueue.h"
+#include "common/utils.h"
+#include "vfio/vfio_handler.h"
+#include "virtio/virtqueue_layout.h"
 
 #include <algorithm>
 #include <atomic>

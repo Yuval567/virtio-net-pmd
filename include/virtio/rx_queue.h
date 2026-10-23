@@ -3,11 +3,11 @@
 #include <cstdint>
 #include <memory>
 
-#include "constants.h"
-#include "virtqueue.h"
-#include "data_structures/mbuf.h"
-#include "data_structures/mbuf_mempool.h"
-#include "data_structures/virtio_net_hdr.h"
+#include "virtio/constants.h"
+#include "virtio/virtqueue.h"
+#include "common/mbuf.h"
+#include "common/mbuf_mempool.h"
+#include "virtio/virtio_net_hdr.h"
 
 class RxQueue
 {

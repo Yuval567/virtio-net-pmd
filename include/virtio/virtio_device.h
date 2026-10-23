@@ -2,10 +2,10 @@
 
 #include <memory>
 
-#include "pci_device.h"
-#include "vfio_handler.h"
-#include "virtqueue.h"
-#include "data_structures/virtio_pci_cfg.h"
+#include "pcie/pci_device.h"
+#include "vfio/vfio_handler.h"
+#include "virtio/virtqueue.h"
+#include "virtio/virtio_pci_cfg.h"
 
 class VirtioDevice
 {

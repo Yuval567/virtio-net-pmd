@@ -1,5 +1,5 @@
-#include "rx_queue.h"
-#include "utils.h"
+#include "virtio/rx_queue.h"
+#include "common/utils.h"
 
 #include <algorithm>
 

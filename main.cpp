@@ -1,8 +1,8 @@
-#include "pci_device.h"
-#include "rx_queue.h"
-#include "vfio_handler.h"
-#include "virtio_device.h"
-#include "data_structures/mbuf_mempool.h"
+#include "pcie/pci_device.h"
+#include "virtio/rx_queue.h"
+#include "vfio/vfio_handler.h"
+#include "virtio/virtio_device.h"
+#include "common/mbuf_mempool.h"
 
 #include <array>
 
