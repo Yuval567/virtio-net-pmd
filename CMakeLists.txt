@@ -20,6 +20,8 @@ set(sources
     ${src_dir}/pci_device.cpp
     ${src_dir}/virtio_device.cpp
     ${src_dir}/virtqueue.cpp
+    ${src_dir}/rx_queue.cpp
+    ${src_dir}/mbuf_mempool.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
