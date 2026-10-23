@@ -117,7 +117,8 @@ std::unique_ptr<Virtqueue> VirtioDevice::create_virtqueue()
         LOG_AND_THROW("Device reports queue " + std::to_string(current_queue_index_) + " as unavailable (queue_size == 0)");
     }
 
-    volatile uint16_t* notify_addr = reinterpret_cast<volatile uint16_t*>(notify_base_ + current_queue_index_ * notify_off_multiplier_);
+    const uint16_t queue_notify_off = common_cfg_->queue_notify_off;
+    volatile uint16_t* notify_addr = reinterpret_cast<volatile uint16_t*>(notify_base_ + queue_notify_off * notify_off_multiplier_);
     auto queue = std::make_unique<Virtqueue>(vfio_handle_, current_queue_index_, queue_size, notify_addr);
 
     common_cfg_->queue_desc = queue->desc_iova();
