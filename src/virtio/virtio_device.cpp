@@ -30,6 +30,29 @@ VirtioDevice::VirtioDevice(const int device_fd, const PCIDevice& pci_device, Vfi
     negotiate_features();
 }
 
+VirtioDevice::~VirtioDevice()
+{
+    try
+    {
+        stop();
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Failed to stop VirtIO device: {}", e.what());
+    }
+}
+
+void VirtioDevice::stop()
+{
+    if (stopped_)
+    {
+        return;
+    }
+
+    reset_device();
+    stopped_ = true;
+}
+
 void VirtioDevice::reset_device()
 {
     // writing 0 resets the device; it reads back 0 once the reset is done

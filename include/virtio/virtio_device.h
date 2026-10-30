@@ -24,8 +24,18 @@ public:
      */
     VirtioDevice(const int device_fd, const PCIDevice& pci_device, VfioHandle& vfio_handle);
 
+    /** @brief Resets the device so it stops DMA. */
+    ~VirtioDevice();
+
     VirtioDevice(const VirtioDevice&) = delete;
     VirtioDevice& operator=(const VirtioDevice&) = delete;
+
+    /**
+     * @brief Resets the device so it stops touching virtqueue and buffer memory.
+     *
+     * @throws std::runtime_error if the reset times out.
+     */
+    void stop();
 
     /**
      * @brief Sets up and enables the next queue in order (0 = rx, 1 = tx).
@@ -66,4 +76,5 @@ private:
     volatile uint8_t* notify_base_ = nullptr;
     uint32_t notify_off_multiplier_ = 0;
     uint16_t current_queue_index_ = 0;
+    bool stopped_ = false;
 };
