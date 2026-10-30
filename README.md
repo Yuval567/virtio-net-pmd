@@ -31,6 +31,46 @@ A user-space **VirtIO network driver** written in C++20. It takes a virtio-net P
 ./devtools/setup.sh
 ```
 
+## Run
+
+```bash
+sudo ./build/virtio_net [pci-bdf]
+```
+
+## Try it in QEMU
+
+The commands below are an example setup (q35 machine with a virtual IOMMU and a tap backend). Adjust paths and names to your system.
+
+**Host:** start a guest with a virtual IOMMU and a virtio-net device behind it:
+
+```bash
+sudo ip tuntap add dev tap0 mode tap
+sudo ip link set tap0 up
+
+qemu-system-x86_64 -machine q35,accel=kvm -cpu host -m 2G \
+    -device intel-iommu,intremap=on,caching-mode=on \
+    -netdev tap,id=net1,ifname=tap0,script=no,downscript=no \
+    -device virtio-net-pci,netdev=net1,disable-legacy=on,iommu_platform=on,ats=off \
+    <your usual disk / console options for a Linux guest>
+```
+
+**Guest:** boot with `intel_iommu=on`, then bind the device to `vfio-pci` (find its address with `lspci -nn -d 1af4:1041`) and run the driver. The guest also needs an ordinary NIC for SSH/console, which you must leave alone:
+
+```bash
+BDF=0000:00:05.0
+sudo modprobe vfio-pci
+echo $BDF | sudo tee /sys/bus/pci/devices/$BDF/driver/unbind
+echo 1af4 1041 | sudo tee /sys/bus/pci/drivers/vfio-pci/new_id
+sudo ./build/virtio_net $BDF
+```
+
+**Host:** send test frames to the device:
+
+```bash
+sudo python3 devtools/send_packets.py tap0 10
+```
+
+
 ## License
 
 [MIT](LICENSE)
