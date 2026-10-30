@@ -8,7 +8,7 @@ A VirtIO device has three parts:
 
 - **Transport:** how the driver finds the device and reaches its registers. This page covers **VirtIO over PCI**; there are also MMIO and channel-I/O transports.
 - **Device configuration and feature negotiation:** a status handshake and a feature bitmap, so driver and device agree on what is supported.
-- **Virtqueues:** shared-memory queues used to move data. This is where DMA comes in (see [dma.md](dma.md) and [PCIe/pcie-dma-data-path.md](PCIe/pcie-dma-data-path.md)).
+- **Virtqueues:** shared-memory queues used to move data.
 
 This page summarizes the OASIS VirtIO 1.x specification, focusing on the PCI transport, split virtqueues and the network device.
 
@@ -45,7 +45,6 @@ In a virtualized setup the "device" is implemented by the hypervisor (e.g. QEMU)
 
 - Vendor ID `0x1af4` (Red Hat / VirtIO).
 - Modern (VirtIO 1.x) device IDs are `0x1040 + <device type>`; virtio-net is type 1, so **`0x1041`**.
-- Legacy (pre-1.0) "transitional" devices use different IDs and a different register layout. A modern-only driver requires the `VIRTIO_F_VERSION_1` feature.
 
 ### Capabilities and BARs
 
@@ -62,13 +61,6 @@ Rather than fixed register offsets, a modern device describes where its register
 | 9 | Vendor data | Vendor-specific (unused by virtio-net) |
 
 The driver walks the capability list and resolves each entry to a location inside the corresponding BAR. The PCI configuration access capability (type 5) is only needed when a BAR cannot be mapped directly.
-
-The **common configuration** structure (`virtio_pci_common_cfg`) holds:
-
-- Device-wide fields: `device_feature(_select)`, `driver_feature(_select)`, `num_queues`, `device_status`.
-- Per-queue fields, used after writing `queue_select`: `queue_size`, `queue_enable`, `queue_notify_off`, and the three 64-bit queue addresses `queue_desc`, `queue_driver`, `queue_device`.
-
-The 64-bit feature bitmap is exposed 32 bits at a time through the `*_feature_select` registers.
 
 ## Device Initialization
 
@@ -102,7 +94,7 @@ Notes:
 
 ## Virtqueues
 
-A virtqueue is the data channel between driver and device. virtio-net uses one RX and one TX queue per queue pair (plus an optional control queue).
+A virtqueue is the data channel between driver and device. virtio-net uses one RX and one TX queue per queue pair.
 
 The **split virtqueue** layout consists of three structures in driver-allocated memory:
 
